@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Recommendation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-green-100">
+    <header class="bg-green-600 text-white text-center p-4 text-2xl font-bold">
+        Crop Recommendation
+    </header>
+    
+    <div class="container mx-auto p-6 text-center">
+        <p class="mb-4">Enter soil type and climate condition to get crop recommendations.</p>
+        <input type="text" id="soil" placeholder="Enter soil type (e.g., loamy)" class="border p-2 rounded w-1/2">
+        <input type="text" id="climate" placeholder="Enter climate (e.g., warm)" class="border p-2 rounded w-1/2">
+        <button id="getCrop" class="mt-3 bg-green-500 text-white px-4 py-2 rounded">Get Recommendations</button>
+        
+        <div class="mt-6 p-4 bg-white shadow rounded">
+            <h3 class="text-lg font-semibold">Recommended Crops</h3>
+            <p id="crop-result" class="mt-2">Crop recommendations will appear here.</p>
+        </div>
+    </div>
+
+    <footer class="text-center mt-6">
+        <a href="index.html" class="text-green-700">Back to Home</a>
+    </footer>
+
+    <script>
+        document.getElementById("getCrop").addEventListener("click", function() {
+            let soil = document.getElementById("soil").value;
+            let climate = document.getElementById("climate").value;
+            
+            fetch("/crop", {
+                method: "POST",
+                body: new URLSearchParams({ "soil": soil, "climate": climate }),
+                headers: { "Content-Type": "application/x-www-form-urlencoded" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("crop-result").innerText = 
+                    `Recommended Crops: ${data.recommended_crops.join(", ")}`;
+            })
+            .catch(error => console.error("Error fetching crop recommendations:", error));
+        });
+    </script>
+</body>
+</html>
