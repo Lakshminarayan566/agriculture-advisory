@@ -10,40 +10,146 @@
     <header class="bg-green-600 text-white text-center p-4 text-2xl font-bold">
         Crop Recommendation
     </header>
-    
-    <div class="container mx-auto p-6 text-center">
-        <p class="mb-4">Enter soil type and climate condition to get crop recommendations.</p>
-        <input type="text" id="soil" placeholder="Enter soil type (e.g., loamy)" class="border p-2 rounded w-1/2">
-        <input type="text" id="climate" placeholder="Enter climate (e.g., warm)" class="border p-2 rounded w-1/2">
-        <button id="getCrop" class="mt-3 bg-green-500 text-white px-4 py-2 rounded">Get Recommendations</button>
-        
-        <div class="mt-6 p-4 bg-white shadow rounded">
-            <h3 class="text-lg font-semibold">Recommended Crops</h3>
-            <p id="crop-result" class="mt-2">Crop recommendations will appear here.</p>
+
+    <div class="container mx-auto p-6 max-w-2xl">
+        <p class="mb-6 text-center text-gray-600">Enter your soil and climate parameters to get AI-powered crop recommendations.</p>
+
+        <div class="bg-white shadow rounded p-6">
+            <h3 class="text-lg font-semibold text-green-700 mb-4">🌱 Soil & Climate Parameters</h3>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nitrogen (N) — mg/kg</label>
+                    <input type="number" id="N" placeholder="e.g. 90" min="0" max="140"
+                        class="border p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phosphorus (P) — mg/kg</label>
+                    <input type="number" id="P" placeholder="e.g. 42" min="0" max="145"
+                        class="border p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Potassium (K) — mg/kg</label>
+                    <input type="number" id="K" placeholder="e.g. 43" min="0" max="205"
+                        class="border p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Temperature — °C</label>
+                    <input type="number" id="temperature" placeholder="e.g. 25" min="0" max="50" step="0.1"
+                        class="border p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Humidity — %</label>
+                    <input type="number" id="humidity" placeholder="e.g. 80" min="0" max="100" step="0.1"
+                        class="border p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Soil pH</label>
+                    <input type="number" id="ph" placeholder="e.g. 6.5" min="0" max="14" step="0.1"
+                        class="border p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-400">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Rainfall — mm</label>
+                    <input type="number" id="rainfall" placeholder="e.g. 200" min="0" max="300" step="0.1"
+                        class="border p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-400">
+                </div>
+            </div>
+
+            <button id="getCrop"
+                class="mt-6 w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded font-semibold transition">
+                🌾 Get Crop Recommendation
+            </button>
+        </div>
+
+        <!-- Results -->
+        <div class="mt-6 p-6 bg-white shadow rounded" id="result-box" style="display:none;">
+            <h3 class="text-lg font-semibold text-green-700 mb-3">🏆 Recommendation Results</h3>
+
+            <div class="bg-green-50 border border-green-300 rounded p-4 mb-4">
+                <p class="text-sm text-gray-500">Best Crop</p>
+                <p class="text-2xl font-bold text-green-700" id="top-crop">—</p>
+                <p class="text-sm text-gray-500">Confidence: <span id="top-confidence" class="font-semibold text-green-600">—</span></p>
+            </div>
+
+            <h4 class="text-sm font-semibold text-gray-600 mb-2">Top 3 Recommendations</h4>
+            <div id="top3" class="grid grid-cols-3 gap-3"></div>
+        </div>
+
+        <!-- Error -->
+        <div id="error-box" class="mt-4 p-4 bg-red-100 border border-red-300 rounded text-red-700" style="display:none;">
+            <p id="error-msg"></p>
         </div>
     </div>
 
-    <footer class="text-center mt-6">
-        <a href="index.html" class="text-green-700">Back to Home</a>
+    <footer class="text-center mt-6 mb-4">
+        <a href="/" class="text-green-700 hover:underline">← Back to Home</a>
     </footer>
 
     <script>
-        document.getElementById("getCrop").addEventListener("click", function() {
-            let soil = document.getElementById("soil").value;
-            let climate = document.getElementById("climate").value;
-            
+        document.getElementById("getCrop").addEventListener("click", function () {
+            const fields = ["N", "P", "K", "temperature", "humidity", "ph", "rainfall"];
+            const values = {};
+            let allFilled = true;
+
+            fields.forEach(f => {
+                const val = document.getElementById(f).value;
+                if (val === "") allFilled = false;
+                values[f] = val;
+            });
+
+            if (!allFilled) {
+                showError("Please fill in all 7 fields before getting a recommendation.");
+                return;
+            }
+
+            const btn = document.getElementById("getCrop");
+            btn.innerText = "⏳ Analysing...";
+            btn.disabled = true;
+
             fetch("/crop", {
                 method: "POST",
-                body: new URLSearchParams({ "soil": soil, "climate": climate }),
+                body: new URLSearchParams(values),
                 headers: { "Content-Type": "application/x-www-form-urlencoded" }
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById("crop-result").innerText = 
-                    `Recommended Crops: ${data.recommended_crops.join(", ")}`;
+                btn.innerText = "🌾 Get Crop Recommendation";
+                btn.disabled = false;
+
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                document.getElementById("error-box").style.display = "none";
+                document.getElementById("result-box").style.display = "block";
+                document.getElementById("top-crop").innerText = data.recommended_crop;
+                document.getElementById("top-confidence").innerText = data.confidence;
+
+                const top3Div = document.getElementById("top3");
+                top3Div.innerHTML = "";
+                data.top_3.forEach((item, idx) => {
+                    const medals = ["🥇", "🥈", "🥉"];
+                    top3Div.innerHTML += `
+                        <div class="bg-gray-50 border rounded p-3 text-center">
+                            <p class="text-xl">${medals[idx]}</p>
+                            <p class="font-semibold text-gray-800">${item.crop}</p>
+                            <p class="text-sm text-gray-500">${item.confidence}</p>
+                        </div>`;
+                });
             })
-            .catch(error => console.error("Error fetching crop recommendations:", error));
+            .catch(error => {
+                btn.innerText = "🌾 Get Crop Recommendation";
+                btn.disabled = false;
+                showError("Connection error. Make sure the Flask server is running.");
+            });
         });
+
+        function showError(msg) {
+            document.getElementById("result-box").style.display = "none";
+            document.getElementById("error-box").style.display = "block";
+            document.getElementById("error-msg").innerText = "⚠️ " + msg;
+        }
     </script>
 </body>
 </html>
