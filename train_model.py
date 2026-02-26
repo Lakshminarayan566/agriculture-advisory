@@ -1,13 +1,3 @@
-"""
-train_model.py
---------------
-Trains and evaluates three classifiers on the Crop Recommendation Dataset.
-Run this ONCE to generate saved model files in the /model directory.
-
-Dataset: https://www.kaggle.com/datasets/atharvaingle/crop-recommendation-dataset
-Download Crop_recommendation.csv and place it in the project root before running.
-"""
-
 import os
 import pandas as pd
 import numpy as np
